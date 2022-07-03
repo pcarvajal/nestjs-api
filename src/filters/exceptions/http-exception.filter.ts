@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-import { ErrorResponse } from './interfaces/error-response';
+import { ErrorInterface } from './interfaces/error.interface';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -20,13 +20,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const errorResponse: ErrorResponse = {
+    const errorResponse: ErrorInterface = {
       code: -1,
       timestamp: new Date().toISOString(),
       path: request.url,
       httpStatus: status,
-      description: '',
-      developMessage: '',
     };
 
     response.status(status).json(errorResponse);

@@ -1,23 +1,61 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+
+import { Task } from './interfaces/task.interface';
+import { GenericResponse } from '../../commons/responses/interfaces/generic-response';
+import { PagedResponse } from '../../commons/responses/interfaces/paged-response';
+import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { ResponseHelper } from '../../helpers/response.helper';
-import { Task } from './interfaces/task';
-import { GenericResponse } from '../../commons/responses/generic-response';
 
 @Controller('tasks')
 export class TasksController {
-  constructor(private responseHelper: ResponseHelper<Task>) {}
+  constructor(private taskService: TasksService) {}
 
-  @Get()
-  get(@Param('id') id: string): GenericResponse<Task> {
-    const newTask: Task = {
-      createdAt: new Date().toDateString(),
-      description: 'Desc',
-      name: 'Tarea 1',
-      id: id,
-      expirationDate: new Date().toDateString(),
+  @Get('/:id')
+  async get(@Param('id') id: string): Promise<GenericResponse<Task>> {
+    const task = await this.taskService.getTask(id);
+    return {
+      code: 0,
+      description: 'Success',
+      result: task,
     };
+  }
 
-    return this.responseHelper.successResponse(newTask, 0, 'lala');
+  @Get('/')
+  async getAll(): Promise<PagedResponse<Task[]>> {
+    const tasks = await this.taskService.getTasks();
+    return {
+      code: 0,
+      description: 'Success',
+      pageNumber: 1,
+      pageRecords: 1,
+      totalPages: 1,
+      totalRecords: 1,
+      results: tasks,
+    };
+  }
+
+  @Post()
+  async create(
+    @Body() createTaskDto: CreateTaskDto,
+  ): Promise<GenericResponse<Task>> {
+    const task = await this.taskService.createTask(createTaskDto);
+    return {
+      code: 0,
+      description: 'Success',
+      result: task,
+    };
+  }
+
+  @Put('/:id')
+  async update(
+    @Param('id') id: string,
+    @Body() createTaskDto: CreateTaskDto,
+  ): Promise<GenericResponse<Task>> {
+    const task = await this.taskService.updateTask(id, createTaskDto);
+    return {
+      code: 0,
+      description: 'Success',
+      result: task,
+    };
   }
 }
