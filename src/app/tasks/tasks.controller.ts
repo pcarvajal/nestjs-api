@@ -15,17 +15,25 @@ import { GenericResponse } from '../../shared/interfaces/generic-response.interf
 import { PagedResponse } from '../../shared/interfaces/paged-response.interface';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Tasks')
 @Controller('tasks')
 export class TasksController {
   constructor(private taskService: TasksService) {}
 
   @Get('/:id')
+  @ApiResponse({ status: 200, description: 'Success.' })
+  @ApiResponse({ status: 404, description: 'Not found.' })
+  @ApiResponse({ status: 500, description: 'Server error.' })
   async get(@Param('id') id: string): Promise<GenericResponse<Task>> {
     return await this.taskService.getTask(id);
   }
 
   @Get('/')
+  @ApiResponse({ status: 200, description: 'Success.' })
+  @ApiResponse({ status: 404, description: 'Not found.' })
+  @ApiResponse({ status: 500, description: 'Server error.' })
   async getAll(
     @Query('page', ParseIntPipe) page: number,
   ): Promise<PagedResponse<Task[]>> {
@@ -33,6 +41,8 @@ export class TasksController {
   }
 
   @Post()
+  @ApiResponse({ status: 201, description: 'Created successfully' })
+  @ApiResponse({ status: 500, description: 'Server error.' })
   async create(
     @Body() createTaskDto: CreateTaskDto,
   ): Promise<GenericResponse<Task>> {
@@ -40,6 +50,9 @@ export class TasksController {
   }
 
   @Put('/:id')
+  @ApiResponse({ status: 200, description: 'Update successfully.' })
+  @ApiResponse({ status: 404, description: 'Not found.' })
+  @ApiResponse({ status: 500, description: 'Server error.' })
   async update(
     @Param('id') id: string,
     @Body() createTaskDto: CreateTaskDto,
@@ -48,6 +61,8 @@ export class TasksController {
   }
 
   @Delete('/:id')
+  @ApiResponse({ status: 200, description: 'Delete successfully.' })
+  @ApiResponse({ status: 500, description: 'Server error.' })
   async delete(@Param('id') id: string): Promise<GenericResponse<Task>> {
     return await this.taskService.deleteTaskById(id);
   }

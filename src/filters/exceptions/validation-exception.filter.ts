@@ -2,8 +2,6 @@ import {
   ExceptionFilter,
   Catch,
   ArgumentsHost,
-  HttpException,
-  HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
