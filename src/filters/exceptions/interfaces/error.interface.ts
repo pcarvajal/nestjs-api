@@ -3,6 +3,5 @@ export interface ErrorInterface {
   path: string;
   timestamp: string;
   httpStatus: number;
-  description?: string;
-  developMessage?: string;
+  message: string;
 }
