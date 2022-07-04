@@ -4,13 +4,15 @@ import {
   Delete,
   Get,
   Param,
+  ParseIntPipe,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 
-import { Task } from './interfaces/task.interface';
-import { GenericResponse } from '../../shared/responses/interfaces/generic-response';
-import { PagedResponse } from '../../shared/responses/interfaces/paged-response';
+import { Task } from './schemas/task.schema';
+import { GenericResponse } from '../../shared/interfaces/generic-response.interface';
+import { PagedResponse } from '../../shared/interfaces/paged-response.interface';
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 
@@ -24,8 +26,10 @@ export class TasksController {
   }
 
   @Get('/')
-  async getAll(): Promise<PagedResponse<Task[]>> {
-    return await this.taskService.getTasks();
+  async getAll(
+    @Query('page', ParseIntPipe) page: number,
+  ): Promise<PagedResponse<Task[]>> {
+    return await this.taskService.getTasks(page);
   }
 
   @Post()

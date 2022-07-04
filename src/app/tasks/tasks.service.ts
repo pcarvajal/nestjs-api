@@ -1,38 +1,47 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
 
-import { Task } from './interfaces/task.interface';
+import { Task } from './schemas/task.schema';
 import { CreateTaskDto } from './dto/create-task.dto';
-import { GenericResponse } from '../../shared/responses/interfaces/generic-response';
-import { PagedResponse } from '../../shared/responses/interfaces/paged-response';
+import { GenericResponse } from '../../shared/interfaces/generic-response.interface';
+import { PagedResponse } from '../../shared/interfaces/paged-response.interface';
+import { TasksRepository } from './tasks.repository';
+import { ResponseCodes } from '../../shared/enum/response-codes.enum';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TasksService {
-  constructor(@InjectModel('task') private taskModel: Model<Task>) {}
+  private readonly pageSize: number;
 
-  async getTasks(): Promise<PagedResponse<Task[]>> {
-    const tasks = await this.taskModel.find();
-    if (!tasks)
-      throw new HttpException('Tasks not found', HttpStatus.NOT_FOUND);
+  constructor(
+    private readonly taskRepository: TasksRepository,
+    private readonly configService: ConfigService,
+  ) {
+    this.pageSize = +this.configService.get<number>('RESULTS_PAGE_SIZE');
+  }
+
+  async getTasks(page: number): Promise<PagedResponse<Task[]>> {
+    const data = await this.taskRepository.pagedFind({}, page, this.pageSize);
+
+    if (!data) throw new HttpException('Tasks not found', HttpStatus.NOT_FOUND);
+
     return {
-      code: 0,
-      description: 'Success',
-      pageNumber: 1,
-      pageRecords: 1,
-      totalPages: 1,
-      totalRecords: 1,
-      results: tasks,
+      code: ResponseCodes.SuccessCode.valueOf(),
+      description: ResponseCodes.SuccessDescription.valueOf(),
+      pageNumber: page,
+      pageRecords: data.documents.length,
+      totalPages: Math.ceil(data.total / this.pageSize),
+      totalRecords: data.total,
+      results: data.documents,
     };
   }
 
   async getTask(taskId: string): Promise<GenericResponse<Task>> {
-    const task = await this.taskModel.findById(taskId);
+    const task = await this.taskRepository.findOne({ _id: taskId });
     if (!task)
       throw new HttpException('Task does not exist', HttpStatus.NOT_FOUND);
     return {
-      code: 0,
-      description: 'Success',
+      code: ResponseCodes.SuccessCode.valueOf(),
+      description: ResponseCodes.SuccessDescription.valueOf(),
       result: task,
     };
   }
@@ -40,23 +49,19 @@ export class TasksService {
   async createTask(
     createTaskDto: CreateTaskDto,
   ): Promise<GenericResponse<Task>> {
-    const task = new this.taskModel(createTaskDto);
-    task.save();
+    const task = await this.taskRepository.create(createTaskDto);
     return {
-      code: 0,
-      description: 'Success',
+      code: ResponseCodes.SuccessCode.valueOf(),
+      description: ResponseCodes.SuccessDescription.valueOf(),
       result: task,
     };
   }
 
   async deleteTaskById(taskId: string): Promise<GenericResponse<Task>> {
-    const taskDeleted = await this.taskModel.findByIdAndDelete(taskId);
-    if (!taskDeleted)
-      throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
+    await this.taskRepository.deleteOne({ _id: taskId });
     return {
-      code: 0,
-      description: 'Success',
-      result: taskDeleted,
+      code: ResponseCodes.SuccessCode.valueOf(),
+      description: ResponseCodes.SuccessDescription.valueOf(),
     };
   }
 
@@ -64,18 +69,15 @@ export class TasksService {
     taskId: string,
     createTaskDto: CreateTaskDto,
   ): Promise<GenericResponse<Task>> {
-    const taskUpdated = await this.taskModel.findByIdAndUpdate(
-      taskId,
+    const taskUpdated = await this.taskRepository.findOneAndUpdate(
+      { _id: taskId },
       createTaskDto,
-      {
-        new: true,
-      },
     );
     if (!taskUpdated)
       throw new HttpException('Task not found', HttpStatus.NOT_FOUND);
     return {
-      code: 0,
-      description: 'Success',
+      code: ResponseCodes.SuccessCode.valueOf(),
+      description: ResponseCodes.SuccessDescription.valueOf(),
       result: taskUpdated,
     };
   }

@@ -1,7 +1,7 @@
 import { Document, FilterQuery, Model, UpdateQuery } from 'mongoose';
 
 export abstract class EntityRepository<T extends Document> {
-  constructor(protected readonly entityModel: Model<T>) {}
+  protected constructor(protected readonly entityModel: Model<T>) {}
 
   async findOne(
     entityFilterQuery: FilterQuery<T>,
@@ -18,6 +18,26 @@ export abstract class EntityRepository<T extends Document> {
 
   async find(entityFilterQuery: FilterQuery<T>): Promise<T[] | null> {
     return this.entityModel.find(entityFilterQuery);
+  }
+
+  async pagedFind(
+    entityFilterQuery: FilterQuery<T>,
+    page: number,
+    pageSize: number,
+  ) {
+    const totalDocuments: number = await this.entityModel.countDocuments(
+      entityFilterQuery,
+    );
+    const documents = await this.entityModel
+      .find(entityFilterQuery)
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    return {
+      total: totalDocuments,
+      documents: documents,
+    };
   }
 
   async create(createEntityData: unknown): Promise<T> {
@@ -38,8 +58,8 @@ export abstract class EntityRepository<T extends Document> {
     );
   }
 
-  async deleteMany(entityFilterQuery: FilterQuery<T>): Promise<boolean> {
-    const deleteResult = await this.entityModel.deleteMany(entityFilterQuery);
+  async deleteOne(entityFilterQuery: FilterQuery<T>): Promise<boolean> {
+    const deleteResult = await this.entityModel.deleteOne(entityFilterQuery);
     return deleteResult.deletedCount >= 1;
   }
 }
